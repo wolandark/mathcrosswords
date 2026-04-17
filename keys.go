@@ -1,0 +1,59 @@
+package main
+
+import (
+	"fmt"
+	"github.com/gdamore/tcell/v2"
+)
+
+func setupKeys([][]string) {
+	gridView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch {
+		case event.Key() == tcell.KeyUp || event.Rune() == 'k':
+			oldRow, oldCol := focusRow, focusCol
+			moveFocusCell(app, cells, focusRow-1, focusCol)
+			resetCellColor(oldRow, oldCol)
+			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+
+		case event.Key() == tcell.KeyDown || event.Rune() == 'j':
+			oldRow, oldCol := focusRow, focusCol
+			moveFocusCell(app, cells, focusRow+1, focusCol)
+			resetCellColor(oldRow, oldCol)
+			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+
+		case event.Key() == tcell.KeyLeft || event.Rune() == 'h':
+			oldRow, oldCol := focusRow, focusCol
+			moveFocusCell(app, cells, focusRow, focusCol-1)
+			resetCellColor(oldRow, oldCol)
+			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+
+		case event.Key() == tcell.KeyRight || event.Rune() == 'l':
+			oldRow, oldCol := focusRow, focusCol
+			moveFocusCell(app, cells, focusRow, focusCol+1)
+			resetCellColor(oldRow, oldCol)
+			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+
+		case event.Key() == tcell.KeyEnter:
+			insertMode = true
+			return nil
+
+		case insertMode && event.Key() == tcell.KeyEsc:
+			insertMode = false
+			return nil
+			// mkForm()
+
+		case insertMode && event.Rune() != 0:
+			cell := cells[focusRow][focusCol]
+			cell.SetText(cell.GetText(false) + string(event.Rune()))
+			return nil
+
+		case event.Rune() == 'S': //Submti
+			res := test()
+			fmt.Println(res)
+
+		case event.Rune() == 'q':
+			app.Stop()
+		}
+
+		return nil
+	})
+}

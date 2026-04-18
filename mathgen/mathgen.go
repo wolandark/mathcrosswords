@@ -80,9 +80,10 @@ type Puzzle struct {
 
 func (puzzle *Puzzle) UniqueCells() []CellPosition {
 	seen := map[CellPosition]bool{}
-	for _, eq := range puzzle.Equations {
-		for _, pos := range eq.Cells() {
-			seen[pos] = true
+	for i := 0; i < len(puzzle.Equations); i++ {
+		positions := puzzle.Equations[i].Cells()
+		for j := 0; j < len(positions); j++ {
+			seen[positions[j]] = true
 		}
 	}
 	cells := make([]CellPosition, 0, len(seen))
@@ -109,8 +110,9 @@ func (puzzle *Puzzle) backtrack(cells []CellPosition, index int, rng *rand.Rand)
 		return true
 	}
 	pos := cells[index]
-	for _, offset := range rng.Perm(puzzle.MaxVal) {
-		puzzle.Values[pos] = offset + 1
+	perm := rng.Perm(puzzle.MaxVal)
+	for i := 0; i < len(perm); i++ {
+		puzzle.Values[pos] = perm[i] + 1
 		if puzzle.consistent(pos) && puzzle.backtrack(cells, index+1, rng) {
 			return true
 		}
@@ -120,11 +122,12 @@ func (puzzle *Puzzle) backtrack(cells []CellPosition, index int, rng *rand.Rand)
 }
 
 func (puzzle *Puzzle) consistent(changedPos CellPosition) bool {
-	for _, eq := range puzzle.Equations {
+	for i := 0; i < len(puzzle.Equations); i++ {
+		eq := puzzle.Equations[i]
 		positions := eq.Cells()
 		involves := false
-		for _, pos := range positions {
-			if pos == changedPos {
+		for j := 0; j < len(positions); j++ {
+			if positions[j] == changedPos {
 				involves = true
 				break
 			}
@@ -210,19 +213,21 @@ func (puzzle *Puzzle) consistent(changedPos CellPosition) bool {
 
 func (puzzle *Puzzle) ToGrid(hidden map[CellPosition]bool) [][]string {
 	grid := make([][]string, puzzle.Size)
-	for row := range grid {
+	for row := 0; row < puzzle.Size; row++ {
 		grid[row] = make([]string, puzzle.Size)
-		for col := range grid[row] {
+		for col := 0; col < puzzle.Size; col++ {
 			grid[row][col] = "0"
 		}
 	}
-	for _, eq := range puzzle.Equations {
+	for i := 0; i < len(puzzle.Equations); i++ {
+		eq := puzzle.Equations[i]
 		positions := eq.Cells()
 		opPos := eq.OpCell()
 		eqPos := eq.EqCell()
 		grid[opPos.Row][opPos.Col] = string(eq.Op)
 		grid[eqPos.Row][eqPos.Col] = "="
-		for _, pos := range positions {
+		for j := 0; j < len(positions); j++ {
+			pos := positions[j]
 			if hidden[pos] {
 				grid[pos.Row][pos.Col] = "999"
 			} else {
@@ -267,24 +272,27 @@ type Result struct {
 // isSolvable returns true if every hidden cell can be deduced by repeatedly
 // applying the rule: if 2 of 3 cells in an equation are known, the 3rd is too.
 func isSolvable(puzzle *Puzzle, hidden map[CellPosition]bool) bool {
+	allCells := puzzle.UniqueCells()
 	known := map[CellPosition]bool{}
-	for _, pos := range puzzle.UniqueCells() {
-		if !hidden[pos] {
-			known[pos] = true
+	for i := 0; i < len(allCells); i++ {
+		if !hidden[allCells[i]] {
+			known[allCells[i]] = true
 		}
 	}
 	for {
 		progress := false
-		for _, eq := range puzzle.Equations {
-			positions := eq.Cells()
-			var unknowns []CellPosition
-			for _, pos := range positions {
-				if !known[pos] {
-					unknowns = append(unknowns, pos)
+		for i := 0; i < len(puzzle.Equations); i++ {
+			positions := puzzle.Equations[i].Cells()
+			unknownCount := 0
+			lastUnknown := CellPosition{}
+			for j := 0; j < len(positions); j++ {
+				if !known[positions[j]] {
+					unknownCount++
+					lastUnknown = positions[j]
 				}
 			}
-			if len(unknowns) == 1 {
-				known[unknowns[0]] = true
+			if unknownCount == 1 {
+				known[lastUnknown] = true
 				progress = true
 			}
 		}
@@ -292,8 +300,8 @@ func isSolvable(puzzle *Puzzle, hidden map[CellPosition]bool) bool {
 			break
 		}
 	}
-	for _, pos := range puzzle.UniqueCells() {
-		if !known[pos] {
+	for i := 0; i < len(allCells); i++ {
+		if !known[allCells[i]] {
 			return false
 		}
 	}
@@ -311,17 +319,17 @@ func Generate(rng *rand.Rand, hideProb float64) (*Result, error) {
 	var hidden map[CellPosition]bool
 	for attempt := 0; attempt < 200; attempt++ {
 		hidden = map[CellPosition]bool{}
-		for _, pos := range allCells {
+		for i := 0; i < len(allCells); i++ {
 			if rng.Float64() < hideProb {
-				hidden[pos] = true
+				hidden[allCells[i]] = true
 			}
 		}
 		// ensure every equation has at least one hidden cell
-		for _, eq := range puzzle.Equations {
-			positions := eq.Cells()
+		for i := 0; i < len(puzzle.Equations); i++ {
+			positions := puzzle.Equations[i].Cells()
 			hasHidden := false
-			for _, pos := range positions {
-				if hidden[pos] {
+			for j := 0; j < len(positions); j++ {
+				if hidden[positions[j]] {
 					hasHidden = true
 					break
 				}
@@ -338,17 +346,17 @@ func Generate(rng *rand.Rand, hideProb float64) (*Result, error) {
 	// but never un-hide a cell that is the sole hidden cell in its equation
 	if !isSolvable(puzzle, hidden) {
 		order := rng.Perm(len(allCells))
-		for _, index := range order {
-			pos := allCells[index]
+		for i := 0; i < len(order); i++ {
+			pos := allCells[order[i]]
 			if !hidden[pos] {
 				continue
 			}
 			isSoleHidden := false
-			for _, eq := range puzzle.Equations {
-				positions := eq.Cells()
+			for j := 0; j < len(puzzle.Equations); j++ {
+				positions := puzzle.Equations[j].Cells()
 				involvedInEq := false
-				for _, eqPos := range positions {
-					if eqPos == pos {
+				for k := 0; k < len(positions); k++ {
+					if positions[k] == pos {
 						involvedInEq = true
 						break
 					}
@@ -357,8 +365,8 @@ func Generate(rng *rand.Rand, hideProb float64) (*Result, error) {
 					continue
 				}
 				hiddenCount := 0
-				for _, eqPos := range positions {
-					if hidden[eqPos] {
+				for k := 0; k < len(positions); k++ {
+					if hidden[positions[k]] {
 						hiddenCount++
 					}
 				}

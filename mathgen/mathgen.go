@@ -263,6 +263,42 @@ type Result struct {
 	Solution [][]string
 }
 
+// isSolvable returns true if every hidden cell can be deduced by repeatedly
+// applying the rule: if 2 of 3 cells in an equation are known, the 3rd is too.
+func isSolvable(p *Puzzle, hidden map[CellIdx]bool) bool {
+	known := map[CellIdx]bool{}
+	for _, c := range p.UniqueCells() {
+		if !hidden[c] {
+			known[c] = true
+		}
+	}
+	for {
+		progress := false
+		for _, eq := range p.Equations {
+			cs := eq.Cells()
+			var unknowns []CellIdx
+			for _, c := range cs {
+				if !known[c] {
+					unknowns = append(unknowns, c)
+				}
+			}
+			if len(unknowns) == 1 {
+				known[unknowns[0]] = true
+				progress = true
+			}
+		}
+		if !progress {
+			break
+		}
+	}
+	for _, c := range p.UniqueCells() {
+		if !known[c] {
+			return false
+		}
+	}
+	return true
+}
+
 // Generate solves the default layout, hides cells with probability hideProb,
 // and returns a ready-to-render Result.
 func Generate(rng *rand.Rand, hideProb float64) (*Result, error) {
@@ -270,10 +306,43 @@ func Generate(rng *rand.Rand, hideProb float64) (*Result, error) {
 	if !p.Solve(rng) {
 		return nil, errors.New("mathgen: failed to solve layout")
 	}
-	hidden := map[CellIdx]bool{}
-	for _, c := range p.UniqueCells() {
-		if rng.Float64() < hideProb {
-			hidden[c] = true
+	cells := p.UniqueCells()
+	var hidden map[CellIdx]bool
+	for attempt := 0; attempt < 200; attempt++ {
+		hidden = map[CellIdx]bool{}
+		for _, c := range cells {
+			if rng.Float64() < hideProb {
+				hidden[c] = true
+			}
+		}
+		// ensure every equation has at least one hidden cell
+		for _, eq := range p.Equations {
+			cs := eq.Cells()
+			hasHidden := false
+			for _, c := range cs {
+				if hidden[c] {
+					hasHidden = true
+					break
+				}
+			}
+			if !hasHidden {
+				hidden[cs[rng.Intn(3)]] = true
+			}
+		}
+		if isSolvable(p, hidden) {
+			break
+		}
+	}
+	// fallback: reveal cells one by one until solvable
+	if !isSolvable(p, hidden) {
+		order := rng.Perm(len(cells))
+		for _, i := range order {
+			if hidden[cells[i]] {
+				delete(hidden, cells[i])
+				if isSolvable(p, hidden) {
+					break
+				}
+			}
 		}
 	}
 	return &Result{

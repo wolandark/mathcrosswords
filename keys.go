@@ -41,7 +41,8 @@ func setupKeys([][]string) {
 			return nil
 			// mkForm()
 
-		case insertMode && event.Rune() != 0:
+		// case insertMode && event.Rune() != 0:
+		case insertMode && event.Rune() >= '0' && event.Rune() <= '9':
 			cell := cells[focusRow][focusCol]
 			cell.SetText(cell.GetText(false) + string(event.Rune()))
 			return nil
@@ -49,6 +50,14 @@ func setupKeys([][]string) {
 		case event.Rune() == 'S': //Submti
 			res := test()
 			fmt.Println(res)
+
+		case insertMode && event.Key() == tcell.KeyBackspace:
+			cell := cells[focusRow][focusCol]
+			t := cell.GetText(false)
+			if len(t) > 0 {
+				cell.SetText(t[:len(t)-1])
+			}
+			return nil
 
 		case event.Rune() == 'q':
 			app.Stop()

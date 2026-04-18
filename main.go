@@ -94,13 +94,14 @@ func PopulateGrid(gridView *tview.Grid, grid [][]string) {
 			switch val {
 			case "0":
 				cell.SetText("   ")
-				cell.SetBackgroundColor(tcell.ColorBeige)
+				cell.SetBackgroundColor(tcell.ColorGray)
 			case "999":
 				cell.SetText("     ")
-				cell.SetBackgroundColor(tcell.ColorSalmon)
+				cell.SetBackgroundColor(tcell.ColorSteelBlue)
 			default:
 				cell.SetText(" " + val + " ")
-				cell.SetBackgroundColor(tcell.ColorDarkGreen)
+				cell.SetBackgroundColor(tcell.ColorTeal)
+				cell.SetTextColor(tcell.ColorBlack)
 			}
 			gridView.AddItem(cell, r, c, 1, 1, 0, 0, false)
 			cells[r][c] = cell
@@ -111,11 +112,11 @@ func PopulateGrid(gridView *tview.Grid, grid [][]string) {
 func resetCellColor(r, c int) {
 	switch grid[r][c] {
 	case "0":
-		cells[r][c].SetBackgroundColor(tcell.ColorBeige)
+		cells[r][c].SetBackgroundColor(tcell.ColorGray)
 	case "999":
-		cells[r][c].SetBackgroundColor(tcell.ColorSalmon)
+		cells[r][c].SetBackgroundColor(tcell.ColorSteelBlue)
 	default:
-		cells[r][c].SetBackgroundColor(tcell.ColorDarkGreen)
+		cells[r][c].SetBackgroundColor(tcell.ColorTeal)
 	}
 }
 

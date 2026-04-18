@@ -48,7 +48,7 @@ func setupKeys([][]string) {
 			return nil
 
 		case event.Rune() == 'S': //Submti
-			res := test()
+			res := testFullGrid()
 			fmt.Println(res)
 
 		case insertMode && event.Key() == tcell.KeyBackspace:

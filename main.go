@@ -64,11 +64,36 @@ func compareSubAns(a, b [][]string) bool {
 	return true
 }
 
-func test() bool {
+// func test() bool {
+// 	out := readCells()
+// 	v := compareSubAns(out, ans)
+// 	return v
+// }
+
+func testFullGrid() bool {
 	out := readCells()
-	v := compareSubAns(out, ans)
-	return v
+	for row := 0; row < size; row++ {
+		for col := 0; col < size; col++ {
+			if ans[row][col] == "0" {
+				continue
+			}
+			if out[row][col] != ans[row][col] {
+				return false
+			}
+		}
+	}
+	return true
 }
+
+// func test() bool {
+// 	for cellIndex := range lastResult.Hidden {
+// 		userVal := strings.TrimSpace(cells[cellIndex.Row][cellIndex.Col].GetText(true))
+// 		if userVal != lastResult.Solution[cellIndex.Row][cellIndex.Col] {
+// 			return false
+// 		}
+// 	}
+// 	return true
+// }
 
 func PopulateGrid(gridView *tview.Grid, grid [][]string) {
 	size := len(grid)
@@ -124,11 +149,38 @@ func main() {
 	cells = holdCells()
 
 	PopulateGrid(gridView, grid)
+
+	gridSize := len(grid)
+
+	cellH := 2
+	cellW := 6
+
+	gridHeight := gridSize * cellH
+	gridWidth := gridSize * cellW
+
+	centered := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(
+			tview.NewFlex().
+				SetDirection(tview.FlexRow).
+				AddItem(nil, 0, 1, false).
+				AddItem(gridView, gridHeight, 0, true).
+				AddItem(nil, 0, 1, false),
+			gridWidth, 0, true,
+		).
+		AddItem(nil, 0, 1, false)
+
+	app.SetRoot(centered, true)
+
 	setupKeys(grid)
 
-	if err := app.SetRoot(gridView, true).Run(); err != nil {
+	if err := app.Run(); err != nil {
 		panic(err)
 	}
+
+	// if err := app.SetRoot(gridView, true).Run(); err != nil {
+	// panic(err)
+	// }
 }
 
 // ------------------------------------

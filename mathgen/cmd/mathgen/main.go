@@ -53,7 +53,7 @@ func main() {
 		if !eq.Horizontal {
 			orient = "V"
 		}
-		fmt.Printf("//  %s@(%d,%d): %d %c %d = %d\n", orient, eq.R, eq.C, a, eq.Op, b, c)
+		fmt.Printf("//  %s@(%d,%d): %d %c %d = %d\n", orient, eq.Row, eq.Col, a, eq.Op, b, c)
 	}
 	fmt.Println()
 

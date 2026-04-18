@@ -1,4 +1,3 @@
-// Package mathgen generates math-operations crossword puzzles.
 package mathgen
 
 import (

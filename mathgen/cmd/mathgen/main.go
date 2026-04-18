@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"mathgen"
+	"mathcrossword/mathgen"
 )
 
 func printGoGrid(w *os.File, label string, g [][]string) {

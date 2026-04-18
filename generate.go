@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"mathgen"
+	"mathcrossword/mathgen"
 )
 
 var lastResult *mathgen.Result
@@ -19,7 +19,6 @@ func GenGrid() [][]string {
 	return r.Puzzle
 }
 
-// GenSolution returns the solution grid for the most recently generated puzzle.
 func GenSolution() [][]string {
 	if lastResult == nil {
 		GenGrid()

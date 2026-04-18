@@ -1,14 +1,11 @@
-module cross
+module mathcrossword
 
-go 1.26.2
+go 1.24.0
 
 require (
 	github.com/gdamore/tcell/v2 v2.13.8
 	github.com/rivo/tview v0.42.0
-	mathgen v0.0.0
 )
-
-replace mathgen => ./mathgen
 
 require (
 	github.com/gdamore/encoding v1.0.1 // indirect

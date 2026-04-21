@@ -1,8 +1,10 @@
 package main
 
 import (
+	// "bufio"
 	"fmt"
 	"github.com/gdamore/tcell/v2"
+	// "os"
 )
 
 func setupKeys([][]string) {
@@ -48,7 +50,7 @@ func setupKeys([][]string) {
 			return nil
 
 		case event.Rune() == 'S': //Submti
-			res := testFullGrid()
+			res := checkAnswers()
 			fmt.Println(res)
 
 		case insertMode && event.Key() == tcell.KeyBackspace:
@@ -60,6 +62,12 @@ func setupKeys([][]string) {
 			return nil
 
 		case event.Rune() == 'q':
+			// app.Suspend(func() {
+			// sheet := answerSheet()
+			// fmt.Println(sheet)
+			// fmt.Println("Press Enter To Continue...")
+			// bufio.NewReader(os.Stdin).ReadString('\n')
+			// })
 			app.Stop()
 		}
 

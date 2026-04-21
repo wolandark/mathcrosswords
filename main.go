@@ -7,11 +7,16 @@ import (
 	"strings"
 )
 
+type diff struct {
+	Row, Col  int
+	Got, Want string
+}
+
 var focusRow, focusCol int
 var cells [][]*tview.TextView
-var grid = GenGrid()
+var questions = GenGrid()
+var size = len(questions)
 var ans = GenSolution()
-var size = len(grid)
 var app = tview.NewApplication()
 var gridView = tview.NewGrid()
 var insertMode bool
@@ -45,32 +50,45 @@ func readCells() [][]string {
 	return out
 }
 
-func compareSubAns(a, b [][]string) bool {
+func compareSubAns(a, b [][]string) (bool, []diff) {
 	if len(a) != len(b) {
-		return false
+		return false, nil
 	}
-
-	for i := 0; i < len(a); i++ {
+	var diffs []diff
+	for i := range a {
 		if len(a[i]) != len(b[i]) {
-			return false
+			return false, nil
 		}
-
-		for j := 0; j < len(a[i]); j++ {
+		for j := range a[i] {
+			if b[i][j] == "0" || b[i][j] == "999" {
+				continue
+			}
 			if a[i][j] != b[i][j] {
-				return false
+				diffs = append(diffs, diff{i, j, a[i][j], b[i][j]})
 			}
 		}
 	}
-	return true
+	return len(diffs) == 0, diffs
 }
 
-// func test() bool {
-// 	out := readCells()
-// 	v := compareSubAns(out, ans)
-// 	return v
-// }
+func answerSheet() []string {
+	out := readCells()
+	_, diffs := compareSubAns(out, ans)
+	// fmt.Println("ok:", ok)
 
-func testFullGrid() bool {
+	var answersArr []string
+
+	for _, d := range diffs {
+		// fmt.Printf("(%d,%d) got=%q want=%q\n", d.Row, d.Col, d.Got, d.Want)
+		// fmt.Printf("%q\n", d.Want)
+
+		answersArr = append(answersArr, d.Want)
+	}
+
+	return answersArr
+}
+
+func checkAnswers() bool {
 	out := readCells()
 	for row := 0; row < size; row++ {
 		for col := 0; col < size; col++ {
@@ -85,18 +103,8 @@ func testFullGrid() bool {
 	return true
 }
 
-// func test() bool {
-// 	for cellIndex := range lastResult.Hidden {
-// 		userVal := strings.TrimSpace(cells[cellIndex.Row][cellIndex.Col].GetText(true))
-// 		if userVal != lastResult.Solution[cellIndex.Row][cellIndex.Col] {
-// 			return false
-// 		}
-// 	}
-// 	return true
-// }
-
-func PopulateGrid(gridView *tview.Grid, grid [][]string) {
-	size := len(grid)
+func renderGrid(gridView *tview.Grid, questions [][]string) {
+	size := len(questions)
 
 	rows := make([]int, size)
 	cols := make([]int, size)
@@ -106,12 +114,14 @@ func PopulateGrid(gridView *tview.Grid, grid [][]string) {
 		cols[i] = 6
 	}
 
+	rows = append(rows, 2, 2, 2) // gap row, then sheet row
+
 	gridView.SetRows(rows...)
 	gridView.SetColumns(cols...)
 
 	for r := 0; r < size; r++ {
 		for c := 0; c < size; c++ {
-			val := grid[r][c]
+			val := questions[r][c]
 
 			cell := tview.NewTextView().
 				SetTextAlign(tview.AlignCenter)
@@ -128,14 +138,38 @@ func PopulateGrid(gridView *tview.Grid, grid [][]string) {
 				cell.SetBackgroundColor(tcell.ColorTeal)
 				cell.SetTextColor(tcell.ColorBlack)
 			}
-			gridView.AddItem(cell, r, c, 1, 1, 0, 0, false)
+			gridView.AddItem(cell, r, c, 1, 1, 0, 0, true)
 			cells[r][c] = cell
 		}
 	}
+
+	hint := tview.NewTextView().
+		SetTextAlign(tview.AlignLeft).
+		SetTextColor(tcell.ColorWheat)
+	hint.SetText("when lost, choose from the answers below...")
+
+	gridView.AddItem(hint, size, 0, 1, size, 0, 0, false)
+
+	// sheet row
+	var sheet = answerSheet()
+	for i := 0; i < size; i++ {
+
+		a := ""
+		if i < len(sheet) {
+			a = sheet[i]
+		}
+
+		cell := tview.NewTextView()
+		cell.SetBackgroundColor(tcell.ColorBlueViolet)
+		cell.SetTextColor(tcell.ColorWhite)
+		cell.SetText(" " + a + " ")
+		gridView.AddItem(cell, size+1, i, 1, 1, 0, 0, false)
+	}
+
 }
 
 func resetCellColor(r, c int) {
-	switch grid[r][c] {
+	switch questions[r][c] {
 	case "0":
 		cells[r][c].SetBackgroundColor(tcell.ColorGray)
 	case "999":
@@ -148,15 +182,28 @@ func resetCellColor(r, c int) {
 func main() {
 	cells = holdCells()
 
-	PopulateGrid(gridView, grid)
+	renderGrid(gridView, questions)
 
-	gridSize := len(grid)
+	gridSize := len(questions)
 
 	cellH := 2
 	cellW := 6
 
-	gridHeight := gridSize * cellH
+	gridHeight := gridSize*cellH + 4
 	gridWidth := gridSize * cellW
+
+	bordered := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(gridView, 0, 1, true)
+	bordered.SetBorder(true).
+		SetTitle("[ Math CrossWords ]").
+		SetTitleColor(tcell.ColorBlack).
+		SetBorderStyle(
+			tcell.StyleDefault.
+				Foreground(tcell.ColorBlack).
+				Background(tcell.ColorTeal).
+				Bold(true),
+		)
 
 	centered := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
@@ -164,114 +211,17 @@ func main() {
 			tview.NewFlex().
 				SetDirection(tview.FlexRow).
 				AddItem(nil, 0, 1, false).
-				AddItem(gridView, gridHeight, 0, true).
+				AddItem(bordered, gridHeight+2, 0, true).
 				AddItem(nil, 0, 1, false),
-			gridWidth, 0, true,
+			gridWidth+2, 0, true,
 		).
 		AddItem(nil, 0, 1, false)
 
 	app.SetRoot(centered, true)
 
-	setupKeys(grid)
+	setupKeys(questions)
 
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
-
-	// if err := app.SetRoot(gridView, true).Run(); err != nil {
-	// panic(err)
-	// }
 }
-
-// ------------------------------------
-// ------------------------------------
-// Vim Keys
-
-// gridView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-// 	switch event.Rune() {
-// 	case 'k':
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow-1, focusCol)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-// 	case 'j':
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow+1, focusCol)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-// 	case 'h':
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow, focusCol-1)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-// 	case 'l':
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow, focusCol+1)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-// 	}
-// 	return nil
-// })
-
-// ------------------------------------
-// ------------------------------------
-// Arrow Keys
-
-// gridView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-// 	switch event.Key() {
-// 	case tcell.KeyUp:
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow-1, focusCol)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-
-// 	case tcell.KeyDown:
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow+1, focusCol)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-
-// 	case tcell.KeyLeft:
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow, focusCol-1)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-
-// 	case tcell.KeyRight:
-// 		oldRow, oldCol := focusRow, focusCol
-// 		moveFocusCell(app, cells, focusRow, focusCol+1)
-// 		resetCellColor(oldRow, oldCol)
-// 		cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
-
-// 	case tcell.KeyEnter:
-// 		mkForm()
-
-// 	case tcell.KeyEscape:
-// 		gridView.Clear()
-// 	}
-// 	return nil
-// })
-
-// -------------------------------------
-// -------------------------------------
-// Make Form
-
-// func mkForm() {
-// 	form := tview.NewForm().
-// 		AddInputField("?", "", 5, nil, nil)
-// 	form.SetBorder(true)
-
-// 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-// 		if event.Key() == tcell.KeyEscape {
-// 			app.SetRoot(gridView, true)
-// 			return nil
-// 		}
-// 		return event
-// 	})
-// 	formGrid := tview.NewGrid().
-// 		SetRows(0, 10, 0).
-// 		SetColumns(0, 15, 0).
-// 		AddItem(form, 1, 1, 1, 1, 0, 0, true)
-
-// 	app.SetRoot(formGrid, true)
-// }

@@ -16,6 +16,7 @@ var bgColor = tcell.NewRGBColor(0, 0, 85)          // dark blue
 var fgColor = tcell.NewRGBColor(255, 255, 255)     // white
 var hintText = tcell.NewRGBColor(255, 255, 255)    // white
 var sheetBgColor = tcell.ColorLime
+var sheetFgColor = tcell.ColorWhite
 var cursorColor = tcell.NewRGBColor(255, 255, 85) // bright
 
 type palette struct {
@@ -25,6 +26,7 @@ type palette struct {
 	fg,
 	hint,
 	sheetbg,
+	sheetfg,
 	cursor tcell.Color
 }
 
@@ -36,6 +38,7 @@ var palettes = []palette{
 		tcell.ColorBlack,
 		tcell.ColorWheat,
 		tcell.ColorViolet,
+		tcell.ColorWheat,
 		tcell.ColorSilver},
 	{ // Mocha
 		tcell.NewRGBColor(180, 190, 254),
@@ -44,6 +47,7 @@ var palettes = []palette{
 		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(255, 255, 255),
 		tcell.ColorPurple,
+		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(249, 226, 175),
 	},
 	{ // Nord
@@ -53,6 +57,7 @@ var palettes = []palette{
 		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(255, 255, 255),
 		tcell.ColorGray,
+		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(235, 203, 139),
 	},
 	{ // Tokyo
@@ -62,6 +67,7 @@ var palettes = []palette{
 		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(255, 255, 255),
 		tcell.ColorDarkMagenta,
+		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(255, 158, 100),
 	},
 	{ // Everforest
@@ -71,6 +77,7 @@ var palettes = []palette{
 		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(255, 255, 255),
 		tcell.ColorLightGreen,
+		tcell.NewRGBColor(0, 0, 0),
 		tcell.NewRGBColor(230, 126, 128)},
 }
 
@@ -79,8 +86,8 @@ var paletteIdx int
 func toggleColors() {
 	paletteIdx = (paletteIdx + 1) % len(palettes)
 	p := palettes[paletteIdx]
-	answerColor, questionColor, bgColor, fgColor, hintText, sheetBgColor, cursorColor = p.answer,
-		p.question, p.bg, p.fg, p.hint, p.sheetbg, p.cursor
+	answerColor, questionColor, bgColor, fgColor, hintText, sheetBgColor, sheetFgColor, cursorColor = p.answer,
+		p.question, p.bg, p.fg, p.hint, p.sheetbg, p.sheetfg, p.cursor
 
 	for r := 0; r < size; r++ {
 		for c := 0; c < size; c++ {
@@ -89,7 +96,11 @@ func toggleColors() {
 	}
 	cells[focusRow][focusCol].SetBackgroundColor(cursorColor)
 	hint.SetTextColor(hintText)
-	sheetPanel.SetBackgroundColor(sheetBgColor)
+	for _, p := range sheetPanel {
+		p.SetBackgroundColor(sheetBgColor)
+		p.SetTextColor(sheetFgColor)
+	}
+
 }
 
 func resetCellColor(r, c int) {

@@ -14,25 +14,25 @@ func setupKeys([][]string) {
 			oldRow, oldCol := focusRow, focusCol
 			moveFocusCell(app, cells, focusRow-1, focusCol)
 			resetCellColor(oldRow, oldCol)
-			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+			cells[focusRow][focusCol].SetBackgroundColor(cursorColor)
 
 		case event.Key() == tcell.KeyDown || event.Rune() == 'j':
 			oldRow, oldCol := focusRow, focusCol
 			moveFocusCell(app, cells, focusRow+1, focusCol)
 			resetCellColor(oldRow, oldCol)
-			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+			cells[focusRow][focusCol].SetBackgroundColor(cursorColor)
 
 		case event.Key() == tcell.KeyLeft || event.Rune() == 'h':
 			oldRow, oldCol := focusRow, focusCol
 			moveFocusCell(app, cells, focusRow, focusCol-1)
 			resetCellColor(oldRow, oldCol)
-			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+			cells[focusRow][focusCol].SetBackgroundColor(cursorColor)
 
 		case event.Key() == tcell.KeyRight || event.Rune() == 'l':
 			oldRow, oldCol := focusRow, focusCol
 			moveFocusCell(app, cells, focusRow, focusCol+1)
 			resetCellColor(oldRow, oldCol)
-			cells[focusRow][focusCol].SetBackgroundColor(tcell.ColorBlack)
+			cells[focusRow][focusCol].SetBackgroundColor(cursorColor)
 
 		case event.Key() == tcell.KeyEnter:
 			insertMode = true
@@ -69,6 +69,9 @@ func setupKeys([][]string) {
 			// bufio.NewReader(os.Stdin).ReadString('\n')
 			// })
 			app.Stop()
+
+		case event.Rune() == 'c':
+			toggleColors()
 		}
 
 		return nil

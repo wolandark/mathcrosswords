@@ -14,6 +14,7 @@ type diff struct {
 
 var focusRow, focusCol int
 var cells [][]*tview.TextView
+var hint *tview.TextView
 var questions = GenGrid()
 var size = len(questions)
 var ans = GenSolution()
@@ -129,25 +130,25 @@ func renderGrid(gridView *tview.Grid, questions [][]string) {
 			switch val {
 			case "0":
 				cell.SetText("   ")
-				cell.SetBackgroundColor(tcell.ColorGray)
+				cell.SetBackgroundColor(bgColor)
 			case "999":
 				cell.SetText("     ")
-				cell.SetBackgroundColor(tcell.ColorSteelBlue)
+				cell.SetBackgroundColor(questionColor)
 			default:
 				cell.SetText(" " + val + " ")
-				cell.SetBackgroundColor(tcell.ColorTeal)
-				cell.SetTextColor(tcell.ColorBlack)
+				cell.SetBackgroundColor(answerColor)
+				cell.SetTextColor(fgColor)
 			}
 			gridView.AddItem(cell, r, c, 1, 1, 0, 0, true)
 			cells[r][c] = cell
 		}
 	}
 
-	hint := tview.NewTextView().
+	hint = tview.NewTextView().
 		SetTextAlign(tview.AlignLeft).
-		SetTextColor(tcell.ColorWheat)
-	hint.SetText("when lost, choose from the answers below...")
-
+		SetTextColor(hintText)
+	hint.SetText(` press enter to start typing. hjkl or arrows to move  
+ S to check answers when done. if lost, choose from the answers below...`)
 	gridView.AddItem(hint, size, 0, 1, size, 0, 0, false)
 
 	// sheet row
@@ -166,17 +167,6 @@ func renderGrid(gridView *tview.Grid, questions [][]string) {
 		gridView.AddItem(cell, size+1, i, 1, 1, 0, 0, false)
 	}
 
-}
-
-func resetCellColor(r, c int) {
-	switch questions[r][c] {
-	case "0":
-		cells[r][c].SetBackgroundColor(tcell.ColorGray)
-	case "999":
-		cells[r][c].SetBackgroundColor(tcell.ColorSteelBlue)
-	default:
-		cells[r][c].SetBackgroundColor(tcell.ColorTeal)
-	}
 }
 
 func main() {

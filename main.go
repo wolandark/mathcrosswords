@@ -15,6 +15,7 @@ type diff struct {
 var focusRow, focusCol int
 var cells [][]*tview.TextView
 var hint *tview.TextView
+var sheetPanel *tview.TextView
 var questions = GenGrid()
 var size = len(questions)
 var ans = GenSolution()
@@ -160,11 +161,10 @@ func renderGrid(gridView *tview.Grid, questions [][]string) {
 			a = sheet[i]
 		}
 
-		cell := tview.NewTextView()
-		cell.SetBackgroundColor(tcell.ColorBlueViolet)
-		cell.SetTextColor(tcell.ColorWhite)
-		cell.SetText(" " + a + " ")
-		gridView.AddItem(cell, size+1, i, 1, 1, 0, 0, false)
+		sheetPanel = tview.NewTextView()
+		sheetPanel.SetTextColor(tcell.ColorWhite)
+		sheetPanel.SetText(" " + a + " ")
+		gridView.AddItem(sheetPanel, size+1, i, 1, 1, 0, 0, false)
 	}
 
 }
